@@ -180,21 +180,7 @@
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             scene.add(floor);
 
-            // Paredes (Criação de cubos simples)
-            const boxGeometry = new THREE.BoxGeometry(20, 20, 20);
-            const boxMaterial = new THREE.MeshPhongMaterial({ color: 0xff4444, flatShading: true });
-
-            // Gerar algumas paredes aleatórias
-            obstacles = [];
-            for (let i = 0; i < 20; i++) {
-                const box = new THREE.Mesh(boxGeometry, boxMaterial);
-                box.position.x = Math.floor(Math.random() * 20 - 10) * 20;
-                box.position.y = 10; // Metade da altura para ficar no chão
-                box.position.z = Math.floor(Math.random() * 20 - 10) * 20;
-                scene.add(box);
-                const boxBB = new THREE.Box3().setFromObject(box);
-                obstacles.push({ mesh: box, box: boxBB });
-            }
+            
 
             // Cubo texturizado (mesma textura em todas as faces)
             // Deixe `textureURL` vazio para você inserir o link da imagem
@@ -218,7 +204,23 @@
             scene.add(texturedCube);
             // Adiciona cubo texturizado como obstáculo físico
             const cubeBB = new THREE.Box3().setFromObject(texturedCube);
+            obstacles = [];
             obstacles.push({ mesh: texturedCube, box: cubeBB });
+
+            // Paredes (Criação de cubos simples)
+            const boxGeometry = new THREE.BoxGeometry(20, 20, 20);
+            const boxMaterial = new THREE.MeshPhongMaterial({ map: texture });
+
+            // Gerar algumas paredes aleatórias
+            for (let i = 0; i < 20; i++) {
+                const box = new THREE.Mesh(boxGeometry, boxMaterial);
+                box.position.x = Math.floor(Math.random() * 20 - 10) * 20;
+                box.position.y = 10; // Metade da altura para ficar no chão
+                box.position.z = Math.floor(Math.random() * 20 - 10) * 20;
+                scene.add(box);
+                const boxBB = new THREE.Box3().setFromObject(box);
+                obstacles.push({ mesh: box, box: boxBB });
+            }
 
             // Partículas de neve (flocos caindo)
             snowCount = 500;
@@ -277,6 +279,8 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
+        // MARK:Animar
+
         function animate() {
             requestAnimationFrame(animate);
 
@@ -318,27 +322,27 @@
                 texturedCube.rotation.y += 0.3 * delta;
             }
 
-                // Atualiza partículas de neve
-                if (snowParticles) {
-                    const pos = snowParticles.geometry.attributes.position.array;
-                    const vel = snowParticles.geometry.attributes.velocity.array;
-                    for (let i = 0; i < snowCount; i++) {
-                        const idx = 3 * i;
-                        // cai baseado na velocidade individual
-                        pos[idx + 1] -= vel[i] * 60.0 * delta;
-                        // leve deriva lateral
-                        pos[idx] += Math.sin((time / 1000) + i) * 0.2 * delta * 10;
-                        pos[idx + 2] += Math.cos((time / 1000) + i * 0.7) * 0.1 * delta * 10;
+            // Atualiza partículas de neve
+            if (snowParticles) {
+                const pos = snowParticles.geometry.attributes.position.array;
+                const vel = snowParticles.geometry.attributes.velocity.array;
+                for (let i = 0; i < snowCount; i++) {
+                    const idx = 3 * i;
+                    // cai baseado na velocidade individual
+                    pos[idx + 1] -= vel[i] * 60.0 * delta;
+                    // leve deriva lateral
+                    pos[idx] += Math.sin((time / 1000) + i) * 0.2 * delta * 10;
+                    pos[idx + 2] += Math.cos((time / 1000) + i * 0.7) * 0.1 * delta * 10;
 
-                        // quando abaixo do chão, reinicia acima
-                        if (pos[idx + 1] < 0) {
-                            pos[idx + 1] = Math.random() * 800 + 400;
-                            pos[idx] = Math.random() * 2000 - 1000;
-                            pos[idx + 2] = Math.random() * 2000 - 1000;
-                        }
+                    // quando abaixo do chão, reinicia acima
+                    if (pos[idx + 1] < 0) {
+                        pos[idx + 1] = Math.random() * 800 + 400;
+                        pos[idx] = Math.random() * 2000 - 1000;
+                        pos[idx + 2] = Math.random() * 2000 - 1000;
                     }
-                    snowParticles.geometry.attributes.position.needsUpdate = true;
                 }
+                snowParticles.geometry.attributes.position.needsUpdate = true;
+            }
             prevTime = time;
             renderer.render(scene, camera);
         }
